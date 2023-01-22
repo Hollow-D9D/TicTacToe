@@ -5,10 +5,19 @@ using UnityEngine;
 
 public class GameController : MonoBehaviour
 {
-    int matrixSize;
     public string playerSide = "X";
-    int[,] matrix;
+
+    Play playRef;
+
+    int matrixSize;
     int turnCount;
+    int[,] matrix;
+
+
+    private void Start()
+    {
+        playRef = GetComponent<Play>();
+    }
 
     public void Init(int size)
     {
@@ -18,11 +27,6 @@ public class GameController : MonoBehaviour
         for (int i = 0; i < size; i++)
             for (int j = 0; j < size; j++)
                 matrix[i,j] = 0;
-    }
-
-    private void Start()
-    {
-        Init(5);
     }
 
     private void fillMatrix(int index)
@@ -103,11 +107,14 @@ public class GameController : MonoBehaviour
     public void ChangeTurn(int index)
     {
         fillMatrix(index);
-        Debug.Log(checkWin());
+        if(checkWin())
+        {
+            playRef.GameOver(playerSide);   
+        }
         playerSide = playerSide == "X" ? "O" : "X";
         turnCount++;
         if (turnCount == matrixSize * matrixSize)
-            Debug.Log("Draw");
+            playRef.GameOver("Draw");
 
     }
 }
