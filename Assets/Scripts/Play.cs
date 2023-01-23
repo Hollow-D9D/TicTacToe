@@ -10,6 +10,8 @@ public class Play : MonoBehaviour
     [SerializeField] private GameObject selectGridSize;
     [SerializeField] private GameObject selectGameMode;
     [SerializeField] private GameObject gameOver;
+    [SerializeField] private GameObject whosTurn;
+
     [SerializeField] private GameObject[] grids;
 
     public int gridSizeIndex;
@@ -37,14 +39,24 @@ public class Play : MonoBehaviour
         gridSizeIndex = index;
     }
 
-    public void StartGame(int mode)
+    public void StartGame(int turn)
+    {
+        gameController.Init(gridSizeIndex + 3, turn, gameMode);
+        grids[gridSizeIndex].SetActive(true);
+
+        
+    }
+    public void WhosTurn(int mode)
     {
         gameMode = mode;
         selectGameMode.SetActive(false);
-        grids[gridSizeIndex].SetActive(true);
-        gameController.Init(gridSizeIndex + 3);
+        if (mode != 1)
+        {
+            StartGame(-1);
+            return;
+        }
+        whosTurn.SetActive(true);
     }
-
     public void Quit()
     {
         Application.Quit();

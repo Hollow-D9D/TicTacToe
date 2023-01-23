@@ -13,23 +13,35 @@ public class GameController : MonoBehaviour
     int turnCount;
     int[,] matrix;
 
-    bool isAI_X = true;        
-    bool isAI_O = true;
+    bool isAI_X = false;        
+    bool isAI_O = false;
 
     private void Start()
     {
         playRef = GetComponent<Play>();
     }
 
-    public void Init(int size)
+    public void Init(int size, int playerTurn, int gameMode)
     {
+
         turnCount = 0;
         matrixSize = size;
         matrix = new int[size,size];
         for (int i = 0; i < size; i++)
             for (int j = 0; j < size; j++)
                 matrix[i,j] = 0;
-
+        if (gameMode == 1)
+        {
+            if (playerTurn == 0)
+                isAI_O = true;
+            else
+                isAI_X = true;
+        }
+        else if (gameMode == 2)
+        {
+            isAI_X = true;
+            isAI_O = true;
+        }
         if (isAI_X)
             StartCoroutine(makeMove(true, turnCount));
     }
