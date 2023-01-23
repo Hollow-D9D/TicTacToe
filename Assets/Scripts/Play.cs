@@ -43,8 +43,6 @@ public class Play : MonoBehaviour
     {
         gameController.Init(gridSizeIndex + 3, turn, gameMode);
         grids[gridSizeIndex].SetActive(true);
-
-        
     }
     public void WhosTurn(int mode)
     {
