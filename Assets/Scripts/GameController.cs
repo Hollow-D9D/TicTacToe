@@ -13,8 +13,8 @@ public class GameController : MonoBehaviour
     int turnCount;
     int[,] matrix;
 
-    bool isAI_X = true;
-    bool isAI_O;
+    bool isAI_X = true;        
+    bool isAI_O = true;
 
     private void Start()
     {
@@ -44,7 +44,6 @@ public class GameController : MonoBehaviour
                 if (index == 0)
                 {
                     matrix[i, j] = playerSide == "X" ? 1 : 2;
-                    Debug.Log("" + i + " " + j + " " + playerSide);
                     return ;
                 }
             }
@@ -109,44 +108,70 @@ public class GameController : MonoBehaviour
         return false;
     }
 
-
+    void printMatrix()
+    {
+        Debug.Log("\n\n\n");
+        Debug.Log(matrix[0, 0] + " " + matrix[0, 1] + " " + matrix[0, 2]);
+        Debug.Log(matrix[1, 0] + " " + matrix[1, 1] + " " + matrix[1, 2]);
+        Debug.Log(matrix[2, 0] + " " + matrix[2, 1] + " " + matrix[2, 2]);
+    }    
 
     public void ChangeTurn(int index)
     {
+        printMatrix();
         fillMatrix(index);
         if(checkWin(matrix))
         {
-            playRef.GameOver(playerSide);   
+            playRef.GameOver(playerSide);
+            return;
         }
         playerSide = playerSide == "X" ? "O" : "X";
         turnCount++;
         if (turnCount == matrixSize * matrixSize)
             playRef.GameOver("Draw");
         if (isAI_X && playerSide == "X")
-            StartCoroutine(makeMove(true, turnCount));
-        else if (isAI_O && playerSide == "O")
             StartCoroutine(makeMove(false, turnCount));
+        else if (isAI_O && playerSide == "O")
+            StartCoroutine(makeMove(true, turnCount));
     }
+
     int Minimax(int[,] matrixGrid, bool maximizing, int turn)
     {
-        //int result;
-        //if (checkWin(matrixGrid))
-        //{
-        //    result = maximizing ? 1 : -1;
-        //    return result;
-        //}
-        
-           
+        int result;
+        if (checkWin(matrixGrid))
+        {
+            result = maximizing ? 1 : -1;
+            return result;
+        }
+        if (turn == matrixSize * matrixSize)
+            return 0;
 
-        return 1;
+        int bestScore = maximizing ? int.MinValue : int.MaxValue;
+        for (int i = 0; i < matrixSize; i++)
+        {
+            for (int j = 0; j < matrixSize; j++)
+            {
+                if (matrixGrid[i, j] == 0)
+                {
+                    matrixGrid[i, j] = maximizing ? 1 : 2;
+                    int score = Minimax(matrixGrid, !maximizing, turn + 1);
+                    matrixGrid[i, j] = 0;
+                    if ((maximizing && score > bestScore) || (!maximizing && score < bestScore))
+                    {
+                        bestScore = score;
+                    }
+                }
+            }
+        } 
+        return bestScore;
     }
 
     private IEnumerator makeMove(bool maximizing, int turn)
     {
         
         int bestMove = 1;
-        int bestScore = maximizing ? int.MinValue : int.MaxValue;
         int counter = 1;
+        int bestScore = maximizing ? int.MinValue : int.MaxValue;
         for (int i = 0; i < matrixSize; i++)
         {
             for (int j = 0; j < matrixSize; j++)
@@ -166,7 +191,7 @@ public class GameController : MonoBehaviour
             }
 
         }
-        yield return (new WaitForSeconds(0.5f));
+        yield return (new WaitForSeconds(1f));
         GameObject.Find("" + bestMove).GetComponent<GridSpace>().SetSpace();
     }    
 }
