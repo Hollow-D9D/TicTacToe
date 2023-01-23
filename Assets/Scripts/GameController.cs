@@ -147,7 +147,7 @@ public class GameController : MonoBehaviour
             StartCoroutine(makeMove(false, turnCount));
     }
 
-    int Minimax(int[,] matrixGrid, bool maximizing, int turn)
+    int Minimax(int[,] matrixGrid, bool maximizing, int turn, int prevScore)
     {
         if (checkWin(matrixGrid))
             return maximizing ? -1 : 1;
@@ -162,7 +162,7 @@ public class GameController : MonoBehaviour
                 if (matrixGrid[i, j] == 0)
                 {
                     matrixGrid[i, j] = maximizing ? 1 : 2;
-                    int score = Minimax(matrixGrid, !maximizing, turn + 1);
+                    int score = Minimax(matrixGrid, !maximizing, turn + 1, bestScore);
                     matrixGrid[i, j] = 0;
                     if (maximizing && score > bestScore)
                     {
@@ -220,7 +220,7 @@ public class GameController : MonoBehaviour
                 counter++;
             }
         }
-        yield return (new WaitForSeconds(1f));
+        yield return (new WaitForSeconds(.1f));
         GameObject.Find("" + bestMove).GetComponent<GridSpace>().SetSpace();
     }    
 }
