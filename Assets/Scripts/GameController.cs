@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GameController : MonoBehaviour
 {
@@ -15,6 +16,8 @@ public class GameController : MonoBehaviour
 
     bool isAI_X = false;
     bool isAI_O = false;
+    Button[] buttons = null;
+
 
     private void Start()
     {
@@ -136,6 +139,8 @@ public class GameController : MonoBehaviour
             StartCoroutine(makeMove(true, turnCount));
         else if (isAI_O && playerSide == "O")
             StartCoroutine(makeMove(false, turnCount));
+
+
     }
 
     int Minimax(int[,] matrixGrid, bool maximizing, int turn, int alpha, int beta, int depth)
@@ -177,16 +182,69 @@ public class GameController : MonoBehaviour
         return bestScore;
     }
 
+    void getButtons()
+    {
+        GameObject GridObject;
+
+
+        if (matrixSize == 3)
+            GridObject = GameObject.Find("3x3Grid");
+        else if (matrixSize == 4)
+            GridObject = GameObject.Find("4x4Grid");
+        else
+            GridObject = GameObject.Find("5x5Grid");
+        buttons = GridObject.GetComponentsInChildren<Button>();
+
+    }
+
+    void BlockMove()
+    {
+        foreach(Button button in buttons)
+        {
+            button.interactable = false;
+        }
+    }
+
+    void UnlockMoves()
+    {
+        if (isAI_O && isAI_X)
+            return ;
+        for (int i= 0; i < matrixSize; i++)
+        {
+            for (int j = 0; j < matrixSize; j++)
+            {
+                buttons[i * matrixSize + j].interactable = matrix[i,j] == 0 ? true : false;
+            }
+        }
+    }
+
+    int getDepth()
+    {
+        if (matrixSize == 3)
+            return 20;
+        return matrixSize == 5 ? 6 : 10;
+    }
+
+
     private IEnumerator makeMove(bool maximizing, int turn)
     {
+
+        if (buttons == null)
+        {
+            getButtons();
+        }
+        else
+            BlockMove();
         if (turn < 2)
         {
             yield return (new WaitForSeconds(1f));
             GameObject.Find("" + UnityEngine.Random.Range(1, matrixSize * matrixSize)).GetComponent<GridSpace>().SetSpace();
+            UnlockMoves();
         }
         else
         {
-            int depth = matrixSize == 5 ? 8 : 12;
+
+            int depth = getDepth();
             int bestMove = 1;
             int counter = 1;
             int bestScore = maximizing ? int.MinValue : int.MaxValue;
@@ -224,6 +282,7 @@ public class GameController : MonoBehaviour
         }
             yield return (new WaitForSeconds(1f));
             GameObject.Find("" + bestMove).GetComponent<GridSpace>().SetSpace();
+            UnlockMoves();
         }
     }
 }
