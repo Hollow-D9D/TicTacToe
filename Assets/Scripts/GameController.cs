@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class GameController : MonoBehaviour
 {
@@ -16,8 +15,6 @@ public class GameController : MonoBehaviour
 
     bool isAI_X = false;
     bool isAI_O = false;
-    Button[] buttons = null;
-
 
     private void Start()
     {
@@ -123,8 +120,82 @@ public class GameController : MonoBehaviour
         return false;
     }
 
+    private int getDiagonal(int[,] matrixGrid)
+    {
+        int end = matrixSize - 1;
+        int i = 0;
+        for (; i < end; i++)
+        {
+            if (matrixGrid[i, i] == 0 || matrixGrid[i, i] != matrixGrid[i + 1, i + 1])
+                break;
+        }
+        if (i == end)
+            return matrixGrid[i, i];
+        for (i = 0; i < matrixSize - 1; i++)
+        {
+            if (matrixGrid[i, end - i] == 0 || matrixGrid[i, end - i] != matrixGrid[i + 1, end - (i + 1)])
+                return 0;
+        }
+        return matrixGrid[i, end - i];
+    }
+
+    private int getVertical(int[,] matrixGrid)
+    {
+        int end = matrixSize - 1;
+        for (int i = 0; i < matrixSize; i++)
+        {
+            int j;
+            for (j = 0; j < end; j++)
+            {
+                if (matrixGrid[j, i] == 0 || matrixGrid[j, i] != matrixGrid[j + 1, i])
+                    break;
+            }
+            if (j == end)
+                return matrixGrid[j, i];
+        }
+        return 0;
+    }
+
+    private int getHorizontal(int[,] matrixGrid)
+    {
+        int end = matrixSize - 1;
+        for (int i = 0; i < matrixSize; i++)
+        {
+            int j;
+            for (j = 0; j < end; j++)
+            {
+                if (matrixGrid[i, j] == 0 || matrixGrid[i, j] != matrixGrid[i, j + 1])
+                    break;
+            }
+            if (j == end)
+                return matrixGrid[i, j];
+        }
+        return 0;
+    }
+
+    int getWinner(int[,] matrixGrid)
+    {
+        int rtn = getDiagonal(matrixGrid);
+        if (rtn != 0)
+            return rtn;
+        rtn = getVertical(matrixGrid);
+        if (rtn != 0)
+            return rtn;
+        rtn = getHorizontal(matrixGrid);
+        return rtn;
+    }
+
+    void printMatrix()
+    {
+        Debug.Log("\n\n\n");
+        Debug.Log(matrix[0, 0] + " " + matrix[0, 1] + " " + matrix[0, 2]);
+        Debug.Log(matrix[1, 0] + " " + matrix[1, 1] + " " + matrix[1, 2]);
+        Debug.Log(matrix[2, 0] + " " + matrix[2, 1] + " " + matrix[2, 2]);
+    }
+
     public void ChangeTurn(int index)
     {
+        //printMatrix();
         fillMatrix(index);
         if (checkWin(matrix))
         {
@@ -139,8 +210,6 @@ public class GameController : MonoBehaviour
             StartCoroutine(makeMove(true, turnCount));
         else if (isAI_O && playerSide == "O")
             StartCoroutine(makeMove(false, turnCount));
-
-
     }
 
     int Minimax(int[,] matrixGrid, bool maximizing, int turn, int alpha, int beta, int depth)
@@ -182,107 +251,46 @@ public class GameController : MonoBehaviour
         return bestScore;
     }
 
-    void getButtons()
+    private IEnumerator makeMove(bool maximizing, int turn)
     {
-        GameObject GridObject;
-
-
-        if (matrixSize == 3)
-            GridObject = GameObject.Find("3x3Grid");
-        else if (matrixSize == 4)
-            GridObject = GameObject.Find("4x4Grid");
-        else
-            GridObject = GameObject.Find("5x5Grid");
-        buttons = GridObject.GetComponentsInChildren<Button>();
-
-    }
-
-    void BlockMove()
-    {
-        foreach(Button button in buttons)
-        {
-            button.interactable = false;
-        }
-    }
-
-    void UnlockMoves()
-    {
-        if (isAI_O && isAI_X)
-            return ;
-        for (int i= 0; i < matrixSize; i++)
+        int depth = matrixSize == 5 ? 5 : 10;
+        int bestMove = 1;
+        int counter = 1;
+        int bestScore = maximizing ? int.MinValue : int.MaxValue;
+        for (int i = 0; i < matrixSize; i++)
         {
             for (int j = 0; j < matrixSize; j++)
             {
-                buttons[i * matrixSize + j].interactable = matrix[i,j] == 0 ? true : false;
+                if (matrix[i, j] == 0)
+                {
+                    matrix[i, j] = maximizing ? 1 : 2;
+                    int score = Minimax(matrix, !maximizing, turn + 1, int.MinValue, int.MaxValue, depth);
+                    matrix[i, j] = 0;
+                    if (maximizing && score > bestScore)
+                    {
+                        bestMove = counter;
+                        bestScore = score;
+                        if (bestScore == 1)
+                            break;
+                    }
+                    if (!maximizing && score < bestScore)
+                    {
+                        bestMove = counter;
+                        bestScore = score;
+                        if (bestScore == -1)
+                            break;
+                    }
+
+                }
+                if (maximizing && 1 == bestScore)
+                    break;
+                if (!maximizing && bestScore == -1)
+                    break;
+                counter++;
             }
         }
+        yield return (new WaitForSeconds(.3f));
+        GameObject.Find("" + bestMove).GetComponent<GridSpace>().SetSpace();
     }
 
-    int getDepth()
-    {
-        if (matrixSize == 3)
-            return 20;
-        return matrixSize == 5 ? 6 : 10;
-    }
-
-
-    private IEnumerator makeMove(bool maximizing, int turn)
-    {
-
-        if (buttons == null)
-        {
-            getButtons();
-        }
-        else
-            BlockMove();
-        if (turn < 2)
-        {
-            yield return (new WaitForSeconds(1f));
-            GameObject.Find("" + UnityEngine.Random.Range(1, matrixSize * matrixSize)).GetComponent<GridSpace>().SetSpace();
-            UnlockMoves();
-        }
-        else
-        {
-
-            int depth = getDepth();
-            int bestMove = 1;
-            int counter = 1;
-            int bestScore = maximizing ? int.MinValue : int.MaxValue;
-            for (int i = 0; i < matrixSize; i++)
-            {
-                for (int j = 0; j < matrixSize; j++)
-                {
-                    if (matrix[i, j] == 0)
-                    {
-                        matrix[i, j] = maximizing ? 1 : 2;
-                        int score = Minimax(matrix, !maximizing, turn + 1, int.MinValue, int.MaxValue, depth);
-                        matrix[i, j] = 0;
-                        if (maximizing && score > bestScore)
-                        {
-                            bestMove = counter;
-                            bestScore = score;
-                            if (bestScore == 1)
-                                break;
-                        }
-                        if (!maximizing && score < bestScore)
-                        {
-                            bestMove = counter;
-                            bestScore = score;
-                            if (bestScore == -1)
-                                break;
-                        }
-
-                    }
-                    if (maximizing && 1 == bestScore)
-                        break;
-                    if (!maximizing && bestScore == -1)
-                        break;
-                    counter++;
-                }
-        }
-            yield return (new WaitForSeconds(1f));
-            GameObject.Find("" + bestMove).GetComponent<GridSpace>().SetSpace();
-            UnlockMoves();
-        }
-    }
 }
